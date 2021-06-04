@@ -1,55 +1,47 @@
 package com.github.tmquotebot.searchspider.config;
 
-import com.datastax.oss.driver.api.core.CqlSession;
-import org.springframework.context.annotation.Bean;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.cassandra.SessionFactory;
-import org.springframework.data.cassandra.config.CqlSessionFactoryBean;
+import org.springframework.data.cassandra.config.AbstractCassandraConfiguration;
 import org.springframework.data.cassandra.config.SchemaAction;
-import org.springframework.data.cassandra.config.SessionFactoryFactoryBean;
-import org.springframework.data.cassandra.core.CassandraOperations;
-import org.springframework.data.cassandra.core.CassandraTemplate;
-import org.springframework.data.cassandra.core.convert.CassandraConverter;
-import org.springframework.data.cassandra.core.convert.MappingCassandraConverter;
-import org.springframework.data.cassandra.core.mapping.CassandraMappingContext;
-import org.springframework.data.cassandra.core.mapping.SimpleUserTypeResolver;
+import org.springframework.data.cassandra.core.cql.keyspace.CreateKeyspaceSpecification;
+import org.springframework.data.cassandra.core.cql.keyspace.KeyspaceOption;
+
+import java.util.List;
 
 @Configuration
-public class CassandraConfiguration {
+public class CassandraConfiguration extends AbstractCassandraConfiguration {
+    @Value("${cassandra.keyspace}")
+    private String keyspace;
 
-    @Bean
-    public CqlSessionFactoryBean session() {
-        CqlSessionFactoryBean session = new CqlSessionFactoryBean();
-        session.setContactPoints("localhost");
-        session.setKeyspaceName("mykeyspace");
-
-        return session;
+    @Override
+    protected String getKeyspaceName() {
+        return keyspace;
     }
 
-    @Bean
-    public SessionFactoryFactoryBean sessionFactory(CqlSession session, CassandraConverter converter) {
-        SessionFactoryFactoryBean sessionFactory = new SessionFactoryFactoryBean();
-        sessionFactory.setSession(session);
-        sessionFactory.setConverter(converter);
-        sessionFactory.setSchemaAction(SchemaAction.NONE);
-
-        return sessionFactory;
+    @Override
+    protected List<CreateKeyspaceSpecification> getKeyspaceCreations() {
+        final CreateKeyspaceSpecification specification =
+                CreateKeyspaceSpecification.createKeyspace(keyspace)
+                        .ifNotExists()
+                        .with(KeyspaceOption.DURABLE_WRITES, true)
+                        .withSimpleReplication();
+        return List.of(specification);
     }
 
-    @Bean
-    public CassandraMappingContext mappingContext() {
-        return new CassandraMappingContext();
+    @Override
+    public String[] getEntityBasePackages() {
+        return new String[]{"com.github.tmquotebot.searchspider.dao.entity"};
     }
 
-    @Bean
-    public CassandraConverter converter(CassandraMappingContext mappingContext, CqlSession cqlSession) {
-        MappingCassandraConverter converter = new MappingCassandraConverter(mappingContext);
-        converter.setUserTypeResolver(new SimpleUserTypeResolver(cqlSession));
-        return new MappingCassandraConverter(mappingContext);
+    @Override
+    public SchemaAction getSchemaAction() {
+        return SchemaAction.CREATE_IF_NOT_EXISTS;
     }
 
-    @Bean
-    public CassandraOperations cassandraTemplate(SessionFactory sessionFactory, CassandraConverter converter) {
-        return new CassandraTemplate(sessionFactory, converter);
-    }
+    // Drops keyspace after application finished
+//    @Override
+//    protected List<DropKeyspaceSpecification> getKeyspaceDrops() {
+//        return List.of(DropKeyspaceSpecification.dropKeyspace(keyspace));
+//    }
 }
