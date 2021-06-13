@@ -1,7 +1,11 @@
+//file:noinspection GroovyAssignabilityCheck
+//file:noinspection GroovyAccessibility
+//file:noinspection GrFinalVariableAccess
 plugins {
     id 'org.springframework.boot' version '2.5.0'
     id 'io.spring.dependency-management' version '1.0.11.RELEASE'
     id 'java'
+//    id 'com.bmuschko.docker-spring-boot-application' version '7.0.0'
 }
 
 group = 'com.github.tmquotebot'
@@ -26,18 +30,33 @@ ext {
 }
 
 dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.boot:spring-boot-starter-data-cassandra'
-    implementation 'org.springframework.boot:spring-boot-starter-data-rest'
-    implementation 'org.springframework.boot:spring-boot-starter-quartz'
-    implementation 'org.springframework.boot:spring-boot-starter-security'
+//    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
+//    implementation 'org.jsoup:jsoup:1.13.1'
+
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-web'
-    //implementation 'org.springframework.cloud:spring-cloud-starter-consul-config'
-    //implementation 'org.springframework.cloud:spring-cloud-starter-consul-discovery'
+    implementation 'org.atteo.classindex:classindex:3.4'
+
+//    implementation 'org.springframework.cloud:spring-cloud-starter-consul-config'
+//    implementation 'org.springframework.cloud:spring-cloud-starter-consul-discovery'
+    implementation 'org.springframework.cloud:spring-cloud-starter-consul-all'
+    implementation group: 'commons-io', name: 'commons-io', version: '2.6'
+    implementation 'net.javacrumbs.shedlock:shedlock-spring:4.24.0'
+    implementation 'net.javacrumbs.shedlock:shedlock-provider-redis-jedis:4.24.0'
+    implementation 'net.javacrumbs.shedlock:shedlock-provider-redis-spring:4.24.0'
+
     compileOnly 'org.projectlombok:lombok'
+    implementation 'org.mapstruct:mapstruct:1.4.2.Final'
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
+    annotationProcessor 'org.mapstruct:mapstruct-processor:1.4.2.Final'
+    annotationProcessor 'org.projectlombok:lombok-mapstruct-binding:0.2.0'
     annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
     annotationProcessor 'org.projectlombok:lombok'
+    annotationProcessor('org.atteo.classindex:classindex:3.4')
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
     testImplementation 'org.testcontainers:cassandra'
@@ -53,4 +72,21 @@ dependencyManagement {
 
 test {
     useJUnitPlatform()
+}
+
+
+docker {
+    springBootApplication {
+        ports = [9090, 8080]
+        images = ['quotebot:latest']
+        jvmArgs = ['-Xmx2048m']
+        mainClassName = 'com.github.tmquotebot.searchspider.SearchSpiderApplication'
+    }
+
+    registryCredentials {
+        url = 'https://index.docker.io/v1/'
+        username = System.getenv('DOCKER_LOGIN')
+        password = System.getenv('DOCKER_PASSWORD')
+        email = System.getenv('DOCKER_EMAIL')
+    }
 }

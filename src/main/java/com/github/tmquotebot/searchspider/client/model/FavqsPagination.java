@@ -10,11 +10,10 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class FiltersModel {
+public class FavqsPagination {
 
-    private List<FilterType> authors;
-    private List<FilterType> tags;
-    private String filter;
-    private int page;
+    private long page;
+    private boolean lastPage;
+    private List<QuoteModel> quotes;
 
 }

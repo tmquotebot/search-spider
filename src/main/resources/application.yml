@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: search-spider
+  cloud:
+    consul:
+      config:
+        enabled: false
+      host: localhost
+      port: 8500
+      discovery:
+        instanceId: ${spring.application.name}:${random.value}
+        healthCheckPath: /actuator/health
+        healthCheckInterval: 20s
+  data.cassandra.schema-action: CREATE_IF_NOT_EXISTS
+
+cassandra.keyspace: quotes
+
+client.favqs:
+  base:
+    url: https://favqs.com/api/
+  api:
+    key: 1b8c110d939ade3ce519b10159183b6c
+
